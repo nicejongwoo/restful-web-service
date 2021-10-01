@@ -1,4 +1,4 @@
-package com.example.rws;
+package com.example.rws.helloworld;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
