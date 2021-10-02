@@ -55,4 +55,10 @@ public class UserDaoService {
         return null;
     }
 
+    public User updateUser(User user, int id) {
+        user.setId(id);
+        users.set(id-1, user);
+        return user;
+    }
+
 }
