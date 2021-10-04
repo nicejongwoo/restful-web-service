@@ -1,6 +1,7 @@
 package com.example.rws.user;
 
 import com.example.rws.post.Post;
+import com.example.rws.post.PostRepository;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -22,13 +23,14 @@ import java.util.Optional;
 public class UserJPAController {
 
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
 
     @GetMapping("/users")
     public MappingJacksonValue userList() {
         List<User> users = userRepository.findAll();
 
         SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter
-                .filterOutAllExcept("id", "name", "joinDate");
+                .filterOutAllExcept("id", "name", "joinDate", "posts");
 
         FilterProvider filters = new SimpleFilterProvider().addFilter("UserInfo", filter);
 
@@ -48,7 +50,7 @@ public class UserJPAController {
         }
 
         SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter
-                .filterOutAllExcept("id", "name", "joinDate");
+                .filterOutAllExcept("id", "name", "joinDate", "posts");
 
         FilterProvider filters = new SimpleFilterProvider().addFilter("UserInfo", filter);
 
@@ -89,5 +91,24 @@ public class UserJPAController {
         MappingJacksonValue mapping = new MappingJacksonValue(user);
         mapping.setFilters(filters);
         return mapping;
+    }
+
+    @PostMapping("/users/{id}/posts")
+    public ResponseEntity<User> createUser(@PathVariable int id, @Valid @RequestBody Post post) {
+
+        Optional<User> user = userRepository.findById(id);
+        if (!user.isPresent()) {
+            throw new UserNotFountException(String.format("ID{%s] not found", id));
+        }
+
+        post.setUser(user.get());
+        Post savedPost = postRepository.save(post);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedPost.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).build();
     }
 }
